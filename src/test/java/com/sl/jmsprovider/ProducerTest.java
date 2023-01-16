@@ -1,21 +1,27 @@
 package com.sl.jmsprovider;
 
-import com.sl.jmsprovider.jms.SLQueue;
-import com.sl.jmsprovider.jms.SLQueueConnectionFactory;
-import com.sl.jmsprovider.jms.SLQueueSender;
-
 import javax.jms.*;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import java.util.Properties;
 
 public class ProducerTest {
 
     public static void main(String[] args) {
         try {
-            QueueConnectionFactory queueConnectionFactory = new SLQueueConnectionFactory();
+//            Properties p = new Properties();
+//            p.setProperty(Context.INITIAL_CONTEXT_FACTORY, "com.sl.jmsprovider.jndi.SLJMSInitialContextFactory");
+//            p.setProperty("connectionFactory.ConnectionFactory", "1234");
+//            p.setProperty("queue.sampleQueue", "Sample");
+
+            InitialContext initialContext = new InitialContext();
+
+            QueueConnectionFactory queueConnectionFactory = (QueueConnectionFactory) initialContext.lookup("ConnectionFactory");
             QueueConnection queueConnection = queueConnectionFactory.createQueueConnection();
             queueConnection.start();
 
             QueueSession queueSession = queueConnection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-            Queue queue = new SLQueue("Sample");
+            Queue queue = (Queue) initialContext.lookup("sampleQueue");
             QueueSender queueSender = queueSession.createSender(queue);
             TextMessage textMessage = queueSession.createTextMessage();
 
@@ -30,7 +36,5 @@ public class ProducerTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
     }
 }

@@ -9,17 +9,19 @@ import java.net.Socket;
 
 public class SLQueueConnectionFactory implements javax.jms.QueueConnectionFactory {
     private Socket socket;
+
+    public SLQueueConnectionFactory(int port) {
+        try {
+            this.socket = new Socket("localhost", port);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public QueueConnection createQueueConnection() throws JMSException {
         SLQueueConnection SLQueueConnection = new SLQueueConnection();
-
-        try {
-              socket = new Socket("localhost", 1234);
-              SLQueueConnection.setSocket(socket);
-        } catch (IOException e) {
-            throw new JMSException(e.getMessage());
-        }
-
+        SLQueueConnection.setSocket(socket);
         return SLQueueConnection;
     }
 
