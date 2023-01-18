@@ -1,22 +1,24 @@
 package com.sl.jmsprovider.core;
 
 
+import com.sl.jmsprovider.jms.SLHandshakeMessage;
+
+import javax.jms.Message;
 import java.io.*;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 
 public class Session implements Runnable {
-
     private SessionHandler sessionHandler;
     private Socket socket;
-    private BufferedReader bufferedReader;
-    private BufferedWriter bufferedWriter;
+    private ObjectInputStream in;
+    private ObjectOutputStream out;
 
     public Session(Socket socket) {
         try {
             this.socket = socket;
-            this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            this.in = new ObjectInputStream(socket.getInputStream());
+            this.out = new ObjectOutputStream(socket.getOutputStream());
         } catch (IOException e) {
             close();
         }
@@ -26,10 +28,10 @@ public class Session implements Runnable {
         try {
             if (socket != null) {
                 socket.close();
-            } if (bufferedWriter != null) {
-                bufferedWriter.close();
-            } if (bufferedReader != null) {
-                bufferedReader.close();
+            } if (in != null) {
+                in.close();
+            } if (out != null) {
+                out.close();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -40,29 +42,29 @@ public class Session implements Runnable {
         return this.socket;
     }
 
-    public BufferedReader getBufferedReader() {
-        return this.bufferedReader;
+    public ObjectInputStream getInputStream() {
+        return this.in;
     }
 
-    public BufferedWriter getBufferedWriter() {
-        return this.bufferedWriter;
+    public ObjectOutputStream getOutputStream() {
+        return this.out;
     }
 
     @Override
     public void run() {
         try {
-            String producerConsumerString = bufferedReader.readLine();
-            String queueName = bufferedReader.readLine();
-            BlockingQueue queue;
-            if(!QueueManager.instantiate().hasQueue(queueName))
-                QueueManager.instantiate().makeQueue(queueName);
+            SLHandshakeMessage handshakeMessage = (SLHandshakeMessage) in.readObject();
+            QueueManager queueManager = QueueManager.instantiate();
 
-            queue = QueueManager.instantiate().getQueue(queueName);
+            if (!(queueManager.hasQueue(handshakeMessage.getQueueName()))) {
+                queueManager.makeQueue(handshakeMessage.getQueueName());
+            }
 
-                //logger.debug("Session Type : "+ producerConsumerString + " / queueName" + queueName);
-            if (producerConsumerString.equals("Consumer")) {
-               this.sessionHandler = new Consumer(queue, this);
-            } else if (producerConsumerString.equals("Producer")) {
+            BlockingQueue<Message> queue = queueManager.getQueue(handshakeMessage.getQueueName());
+
+            if (handshakeMessage.checkIfConsumer()) {
+                this.sessionHandler = new Consumer(queue, this);
+            } else if (handshakeMessage.checkIfProducer()) {
                 this.sessionHandler = new Producer(queue, this);
             } else {
                 close();
@@ -71,7 +73,7 @@ public class Session implements Runnable {
 
             Thread thread = new Thread(sessionHandler);
             thread.start();
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             close();
         }
     }

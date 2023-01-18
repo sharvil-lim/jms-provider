@@ -6,26 +6,26 @@ import java.net.Socket;
 
 public class SLQueueSession implements QueueSession {
     private Socket socket;
-    private BufferedReader bufferedReader;
-    private BufferedWriter bufferedWriter;
+    private ObjectInputStream in;
+    private ObjectOutputStream out;
 
     public void setSocket(Socket socket) {
         this.socket = socket;
-        setBufferedReader();
-        setBufferedWriter();
+        setIn();
+        setOut();
     }
 
-    public void setBufferedWriter() {
+    public void setIn() {
         try {
-            this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            this.in = new ObjectInputStream(socket.getInputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void setBufferedReader() {
+    public void setOut() {
         try {
-            this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.out = new ObjectOutputStream(socket.getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -189,19 +189,19 @@ public class SLQueueSession implements QueueSession {
     @Override
     public QueueReceiver createReceiver(Queue queue) throws JMSException {
         SLQQueueReceiver queueReceiver = new SLQQueueReceiver();
+        SLHandshakeMessage slHandshakeMessage = new SLHandshakeMessage();
 
         try {
-            bufferedWriter.write("Consumer");
-            bufferedWriter.newLine();
-            bufferedWriter.write(queue.getQueueName());
-            bufferedWriter.newLine();
-            bufferedWriter.flush();
+            slHandshakeMessage.setConsumer();
+            slHandshakeMessage.setQueueName(queue.getQueueName());
+            out.writeObject(slHandshakeMessage);
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         queueReceiver.setSocket(this.socket);
-        queueReceiver.setBufferedReader(this.bufferedReader);
+        queueReceiver.setInput(this.in);
         return queueReceiver;
     }
 
@@ -213,19 +213,18 @@ public class SLQueueSession implements QueueSession {
     @Override
     public QueueSender createSender(Queue queue) throws JMSException {
         SLQueueSender queueSender = new SLQueueSender();
+        SLHandshakeMessage slHandshakeMessage = new SLHandshakeMessage();
 
         try {
-            bufferedWriter.write("Producer");
-            bufferedWriter.newLine();
-            bufferedWriter.write(queue.getQueueName());
-            bufferedWriter.newLine();
-            bufferedWriter.flush();
+            slHandshakeMessage.setProducer();
+            slHandshakeMessage.setQueueName(queue.getQueueName());
+            out.writeObject(slHandshakeMessage);
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        queueSender.setSocket(this.socket);
-        queueSender.setBufferedWriter(this.bufferedWriter);
+        queueSender.setOutput(this.out);
         return queueSender;
     }
 

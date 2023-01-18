@@ -7,7 +7,6 @@ import java.net.Socket;
 import java.util.LinkedList;
 
 public class ServerHandler {
-
     private ServerSocket serverSocket;
     private LinkedList<Socket> sockets;
 

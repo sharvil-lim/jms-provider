@@ -1,12 +1,10 @@
 package com.sl.jmsprovider;
 
-import com.sl.jmsprovider.jms.SLMyListener;
+import com.sl.jmsprovider.jms.SLMessageListener;
 
 import javax.jms.*;
-import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import java.util.Properties;
 
 public class ConsumerTest {
 
@@ -23,7 +21,7 @@ public class ConsumerTest {
             Queue queue = (Queue) initialContext.lookup("sampleQueue");
             QueueReceiver queueReceiver = queueSession.createReceiver(queue);
 
-            MessageListener myListener = new SLMyListener();
+            MessageListener myListener = new SLMessageListener();
             queueReceiver.setMessageListener(myListener);
         } catch (JMSException | NamingException e) {
             e.printStackTrace();

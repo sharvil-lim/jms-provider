@@ -6,14 +6,14 @@ import java.net.Socket;
 
 public class SLQQueueReceiver implements QueueReceiver {
     private Socket socket;
-    private BufferedReader bufferedReader;
+    private ObjectInputStream in;
 
     public void setSocket(Socket socket) {
         this.socket = socket;
     }
 
-    public void setBufferedReader(BufferedReader bufferedReader) {
-        this.bufferedReader = bufferedReader;
+    public void setInput(ObjectInputStream in) {
+        this.in = in;
     }
 
     @Override
@@ -36,13 +36,11 @@ public class SLQQueueReceiver implements QueueReceiver {
         new Thread(() -> {
             try {
                 while (socket.isConnected()) {
-                    String str = bufferedReader.readLine();
-                    TextMessage textMessage = new SLTextMessage();
-                    textMessage.setText(str);
-                    listener.onMessage(textMessage);
+                    SLTextMessage message = (SLTextMessage) in.readObject();
+                    listener.onMessage(message);
                 }
-            } catch (JMSException | IOException e) {
-                throw new RuntimeException(e);
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
             }
         }).start();
     }

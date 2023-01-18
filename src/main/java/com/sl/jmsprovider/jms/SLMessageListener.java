@@ -2,7 +2,7 @@ package com.sl.jmsprovider.jms;
 
 import javax.jms.*;
 
-public class SLMyListener implements MessageListener {
+public class SLMessageListener implements MessageListener {
 
     @Override
     public void onMessage(Message message) {

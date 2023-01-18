@@ -2,21 +2,37 @@ package com.sl.jmsprovider.jms;
 
 import javax.jms.Destination;
 import javax.jms.JMSException;
-import javax.jms.TextMessage;
+import javax.jms.Message;
 import java.io.Serializable;
 import java.util.Enumeration;
 
-public class SLTextMessage implements TextMessage, Serializable {
-    private String message;
+public class SLHandshakeMessage implements Message, Serializable {
+    private boolean isProducer;
+    private boolean isConsumer;
+    private String queueName;
 
-    @Override
-    public void setText(String string) throws JMSException {
-        this.message = string;
+    public void setProducer() {
+        this.isProducer = true;
     }
 
-    @Override
-    public String getText() throws JMSException {
-        return message;
+    public void setConsumer() {
+        this.isConsumer = true;
+    }
+
+    public boolean checkIfProducer() {
+        return isProducer;
+    }
+
+    public boolean checkIfConsumer() {
+        return isConsumer;
+    }
+
+    public String getQueueName() {
+        return queueName;
+    }
+
+    public void setQueueName(String queueName) {
+        this.queueName = queueName;
     }
 
     @Override
